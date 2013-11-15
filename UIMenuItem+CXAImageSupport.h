@@ -12,10 +12,10 @@
 
 @interface UIMenuItem (CXAImageSupport)
 
-- (instancetype)cxa_initWithTitle:(NSString *)title action:(SEL)action image:(UIImage *)image;
-- (instancetype)cxa_initWithTitle:(NSString *)title action:(SEL)action settings:(CXAMenuItemSettings *)settings;
-- (void)cxa_setImage:(UIImage *)image;
-- (void)cxa_setSettings:(CXAMenuItemSettings *)settings;
+- (instancetype)initWithTitle:(NSString *)title action:(SEL)action image:(UIImage *)image;
+- (instancetype)initWithTitle:(NSString *)title action:(SEL)action settings:(CXAMenuItemSettings *)settings;
+- (void)setImage:(UIImage *)image;
+- (void)setSettings:(CXAMenuItemSettings *)settings;
 
 @end
 

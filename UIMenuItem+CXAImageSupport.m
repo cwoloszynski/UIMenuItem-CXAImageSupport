@@ -15,8 +15,27 @@ static NSMutableDictionary *titleSettingsPairs;
 
 @interface NSString (CXAImageSupport)
 
-- (NSString *)cxa_stringByWrappingInvisibleIdentifiers;
-- (BOOL)cxa_doesWrapInvisibleIdentifiers;
+- (NSString *)stringByWrappingInvisibleIdentifiers;
+- (BOOL)doesWrapInvisibleIdentifiers;
+
+@end
+#pragma mark - NSString helper category
+@implementation NSString (CXAImageSupport)
+
+- (NSString *)stringByWrappingInvisibleIdentifiers
+{
+    return [NSString stringWithFormat:@"%@%@%@", INVISIBLE_IDENTIFIER, self, INVISIBLE_IDENTIFIER];
+}
+
+- (BOOL)doesWrapInvisibleIdentifiers
+{
+    BOOL doesStartMatch = [self rangeOfString:INVISIBLE_IDENTIFIER options:NSAnchoredSearch].location != NSNotFound;
+    if (!doesStartMatch)
+        return NO;
+    
+    BOOL doesEndMatch = [self rangeOfString:INVISIBLE_IDENTIFIER options:NSAnchoredSearch | NSBackwardsSearch].location != NSNotFound;
+    return doesEndMatch;
+}
 
 @end
 
@@ -36,14 +55,14 @@ static NSMutableDictionary *titleSettingsPairs;
   titleSettingsPairs = nil;
 }
 
-- (instancetype)cxa_initWithTitle:(NSString *)title
+- (instancetype)initWithTitle:(NSString *)title
                            action:(SEL)action
                             image:(UIImage *)image
 {
-  return [self cxa_initWithTitle:title action:action settings:[CXAMenuItemSettings settingsWithDictionary:@{@"image" : image}]];
+  return [self initWithTitle:title action:action settings:[CXAMenuItemSettings settingsWithDictionary:@{@"image" : image}]];
 }
 
-- (instancetype)cxa_initWithTitle:(NSString *)title
+- (instancetype)initWithTitle:(NSString *)title
                            action:(SEL)action
                          settings:(CXAMenuItemSettings *)settings
 {
@@ -51,47 +70,28 @@ static NSMutableDictionary *titleSettingsPairs;
   if (!item)
     return nil;
   
-  [item cxa_setSettings:settings];
+  [item setSettings:settings];
   return item;
 }
 
-- (void)cxa_setImage:(UIImage *)image
+- (void)setImage:(UIImage *)image
 {
-  [self cxa_setSettings:[CXAMenuItemSettings settingsWithDictionary:@{@"image" : image}]];
+  [self setSettings:[CXAMenuItemSettings settingsWithDictionary:@{@"image" : image}]];
 }
 
-- (void)cxa_setSettings:(CXAMenuItemSettings *)settings
+- (void)setSettings:(CXAMenuItemSettings *)settings
 {
   if (!self.title)
     @throw [NSException exceptionWithName:@"UIMenuItem+CXAImageSupport" reason:@"title can't be nil. Assign your item a title before assigning settings." userInfo:nil];
   
-  if (![self.title cxa_doesWrapInvisibleIdentifiers])
-    self.title = [self.title cxa_stringByWrappingInvisibleIdentifiers];
+  if (![self.title doesWrapInvisibleIdentifiers])
+    self.title = [self.title stringByWrappingInvisibleIdentifiers];
   
   titleSettingsPairs[self.title] = settings;
 }
 
 @end
 
-#pragma mark - NSString helper category
-@implementation NSString (CXAImageSupport)
-
-- (NSString *)cxa_stringByWrappingInvisibleIdentifiers
-{
-  return [NSString stringWithFormat:@"%@%@%@", INVISIBLE_IDENTIFIER, self, INVISIBLE_IDENTIFIER];
-}
-
-- (BOOL)cxa_doesWrapInvisibleIdentifiers
-{
-  BOOL doesStartMatch = [self rangeOfString:INVISIBLE_IDENTIFIER options:NSAnchoredSearch].location != NSNotFound;
-  if (!doesStartMatch)
-    return NO;
-  
-  BOOL doesEndMatch = [self rangeOfString:INVISIBLE_IDENTIFIER options:NSAnchoredSearch | NSBackwardsSearch].location != NSNotFound;
-  return doesEndMatch;
-}
-
-@end
 
 #pragma mark - Method swizzling
 
@@ -151,7 +151,7 @@ static CGSize newSizeWithAttributes(id, SEL, id);
 
 static void newDrawTextInRect(UILabel *self, SEL _cmd, CGRect rect)
 {
-  if (![self.text cxa_doesWrapInvisibleIdentifiers] ||
+  if (![self.text doesWrapInvisibleIdentifiers] ||
       !titleSettingsPairs[self.text]){
     origDrawTextInRect(self, @selector(drawTextInRect:), rect);
     return;
@@ -178,7 +178,7 @@ static void newDrawTextInRect(UILabel *self, SEL _cmd, CGRect rect)
 
 static void newSetFrame(UILabel *self, SEL _cmd, CGRect rect)
 {
-  if ([self.text cxa_doesWrapInvisibleIdentifiers] &&
+  if ([self.text doesWrapInvisibleIdentifiers] &&
       titleSettingsPairs[self.text])
     rect = self.superview.bounds;
   
@@ -187,7 +187,7 @@ static void newSetFrame(UILabel *self, SEL _cmd, CGRect rect)
 
 static CGSize newSizeWithFont(NSString *self, SEL _cmd, UIFont *font)
 {
-  if ([self cxa_doesWrapInvisibleIdentifiers] &&
+  if ([self doesWrapInvisibleIdentifiers] &&
       titleSettingsPairs[self]){
     CGSize size = [[titleSettingsPairs[self] image] size];
     size.width -= [titleSettingsPairs[self] shrinkWidth];
@@ -199,7 +199,7 @@ static CGSize newSizeWithFont(NSString *self, SEL _cmd, UIFont *font)
 
 static CGSize newSizeWithAttributes(NSString *self, SEL _cmd, NSDictionary *attributes)
 {
-  if ([self cxa_doesWrapInvisibleIdentifiers] &&
+  if ([self doesWrapInvisibleIdentifiers] &&
       titleSettingsPairs[self]){
     CGSize size = [[titleSettingsPairs[self] image] size];
     size.width -= [titleSettingsPairs[self] shrinkWidth];
